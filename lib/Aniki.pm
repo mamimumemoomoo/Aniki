@@ -256,6 +256,50 @@ sub update {
     }
 }
 
+sub update_and_fetch_row {
+    my $self = shift;
+
+    if (blessed $_[0] && $_[0]->isa('Aniki::Row')) {
+        local $Carp::CarpLevel = $Carp::CarpLevel + 1;
+
+        $self->update($_[0], $_[1]);
+
+        my $row = $self->select($_[0]->table_name, $self->_where_row_cond($_[0]->table, $_[0]->row_data), { limit => 1, suppress_result_objects => 1 })->[0];
+        return $row if $self->suppress_row_objects;
+
+        $row->is_new(1);
+        return $row;
+    }
+    else {
+        croak '(Aniki#update_and_fetch_row) condition must be a Aniki::Row object.';
+    }
+}
+
+sub update_and_emulate_row {
+    my $self = shift;
+
+    if (blessed $_[0] && $_[0]->isa('Aniki::Row')) {
+        local $Carp::CarpLevel = $Carp::CarpLevel + 1;
+
+        $self->update($_[0], $_[1]);
+
+        my $row = $_[0]->get_columns;
+        $row->{$_} = $_[1]->{$_} for keys %{$_[1]};
+
+        $row = $self->filter_on_update($_[0]->table_name, $row);
+
+        return $row if $self->suppress_row_objects;
+        return $self->guess_row_class($_[0]->table_name)->new(
+            table_name => $_[0]->table_name,
+            handler    => $self,
+            row_data   => $row,
+        );
+    }
+    else {
+        croak '(Aniki#update_and_emulate_row) condition must be a Aniki::Row object.';
+    }
+}
+
 sub delete :method {
     my $self = shift;
     if (blessed $_[0] && $_[0]->isa('Aniki::Row')) {
@@ -1162,6 +1206,31 @@ Execute C<UPDATE> query, and returns changed rows count.
     my $count = $db->update($row => { bar => 2 });
     # stmt: UPDATE foo SET bar = ? WHERE id = ?
     # bind: [2, 1]
+
+=head3 C<update_and_fetch_row($row, \%set)>
+
+Execute C<UPDATE> query, and C<SELECT> it, and returns row object.
+
+    my $row = $db->select(foo => { id => 1 }, { limit => 1 })->first;
+    my $new_row = $db->update_and_fetch_row($row => { bar => 2 });
+    # stmt: UPDATE foo SET bar = ? WHERE id = ?
+    # bind: [2, 1]
+
+=head3 C<update_and_emulate_row($row, \%set)>
+
+Execute C<UPDATE> query, and returns row object created by C<$row> and C<%set>.
+
+    my $row = $db->select(foo => { id => 1 }, { limit => 1 })->first;
+    my $new_row = $db->update_and_emulate_row($row => { bar => 2 });
+    # stmt: UPDATE foo SET bar = ? WHERE id = ?
+    # bind: [2, 1]
+
+This method is faster than C<update_and_fetch_row>.
+
+=head4 WARNING
+
+If you use SQL C<TRIGGER> or C<AutoCommit>, this method don't return the correct value, maybe.
+In this case, you should use C<update_and_fetch_row> instead of this method.
 
 =head3 C<delete($table_name, \%where)>
 

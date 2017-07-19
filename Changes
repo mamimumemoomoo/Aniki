@@ -2,6 +2,26 @@ Revision history for Perl extension Aniki
 
 {{$NEXT}}
 
+1.04 2017-05-28T13:03:12Z
+
+   - fixed range condition maker (thanks mamimumemoomoo)
+   - namespace cleaner switched to namespace::autoclean (thanks karenetheridge)
+   - throw more intelligibly error when calling update without data (thanks GeJ)
+   - droped typoed (obsoluted) `make_range_condtion` method
+
+1.03 2017-03-29T11:24:39Z
+
+   - [EXPERIMENTAL] x_static_install=1 (no feature changes)
+
+1.02 2017-02-10T06:14:56Z
+
+   - added lt/gt alias option for lower/upper (watanabe-yoichi)
+
+1.01 2016-12-10T07:07:27Z
+
+   - added lower/upper option for Aniki::Plugin::Pager
+   - added no_offset option for Aniki::Plugin::SQLPager
+
 1.00 2016-05-24T05:10:36Z
 
    - no execute any query if empty values is passed to insert_multi

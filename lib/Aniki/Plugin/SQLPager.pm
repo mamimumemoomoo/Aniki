@@ -1,7 +1,7 @@
 package Aniki::Plugin::SQLPager;
 use 5.014002;
 
-use namespace::sweep;
+use namespace::autoclean;
 use Mouse::Role;
 
 requires qw/select_by_sql select_named/;
@@ -16,7 +16,12 @@ sub select_by_sql_with_pager {
 
     my $limit  = $rows + 1;
     my $offset = $rows * ($page - 1);
-    $sql .= sprintf ' LIMIT %d OFFSET %d', $limit, $offset;
+    if ($opt->{no_offset}) {
+        $sql .= sprintf ' LIMIT %d', $limit;
+    }
+    else {
+        $sql .= sprintf ' LIMIT %d OFFSET %d', $limit, $offset;
+    }
 
     my $result = $self->select_by_sql($sql, $bind, $opt);
     return $self->inject_pager_to_result($result => $opt);
@@ -31,7 +36,12 @@ sub select_named_with_pager {
 
     my $limit  = $rows + 1;
     my $offset = $rows * ($page - 1);
-    $sql .= sprintf ' LIMIT %d OFFSET %d', $limit, $offset;
+    if ($opt->{no_offset}) {
+        $sql .= sprintf ' LIMIT %d', $limit;
+    }
+    else {
+        $sql .= sprintf ' LIMIT %d OFFSET %d', $limit, $offset;
+    }
 
     my $result = $self->select_named($sql, $bind, $opt);
     return $self->inject_pager_to_result($result => $opt);
